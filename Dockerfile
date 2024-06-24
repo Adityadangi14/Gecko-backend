@@ -3,6 +3,6 @@ WORKDIR /server
 COPY . /server
 RUN go build /server
 EXPOSE 3000
-RUN yum update && yum install -y supervisor
+RUN apt-get update && apt-get install -y supervisor
 COPY supervisord.conf /etc/supervisor/conf.d/
 CMD [ "go","run","main.go" ]
