@@ -31,7 +31,7 @@ func main() {
 	r.DELETE("/deleteTag", middleware.RequiredAuth, controllers.DeleteTag)
 	r.GET("/getTags", middleware.RequiredAuth, controllers.GetAllTags)
 	r.PUT("/editTag", middleware.RequiredAuth, controllers.EditTag)
-	r.POST("/uploadThumblanilFile", middleware.RequiredAuth, controllers.UploadThumbnailFiles)
+	r.POST("/uploadThumblanilFile", controllers.UploadThumbnailFiles)
 	r.GET("/getUser", middleware.RequiredAuth, controllers.GetUser)
 	r.PUT("/editUserTagSelectionStatus", middleware.RequiredAuth, controllers.EditUserTagSelectionStatus)
 	r.POST("/createUserTags", middleware.RequiredAuth, controllers.CreateUserTags)
