@@ -3,6 +3,4 @@ WORKDIR /server
 COPY . /server
 RUN go build /server
 EXPOSE 3000
-RUN  apk add --update supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/
 CMD [ "go","run","main.go" ]
