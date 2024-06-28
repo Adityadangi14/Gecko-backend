@@ -5,9 +5,11 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,9 +17,11 @@ import (
 )
 
 func AwsS3Controller(f multipart.FileHeader) (string, error) {
-	//AKIAZQ3DSUWKAERD5VRK
-	//Hhko9f3cFpHAq3ry+jT1IdGdtvCNhoDh2qbg70SW
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(*aws.String("ap-south-1")))
+
+	accesskey := os.Getenv("aws_access_key_id")
+	secretKey := os.Getenv("aws_secret_access_key")
+
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(*aws.String("ap-south-1")), config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accesskey, secretKey, "")))
 
 	if err != nil {
 		log.Printf("error: %v", err)
