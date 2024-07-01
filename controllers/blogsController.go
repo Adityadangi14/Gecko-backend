@@ -134,6 +134,31 @@ func DeleteBlog(c *gin.Context) {
 	})
 }
 
+func GetBlogsByTags(c *gin.Context) {
+	var body struct {
+		TagsId []int64
+	}
+
+	if c.Bind(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Failed to read body",
+		})
+		return
+	}
+
+	var blogTagIds []int64 = body.TagsId
+
+	var blogs []models.BlogModel
+	initializers.DB.Where("tags_id IN (?)", blogTagIds).Find(&blogs)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"blogs":   blogs,
+	})
+
+}
+
 func getBlogsPvt() ([]map[string]interface{}, error) {
 
 	var blogs []models.BlogModel

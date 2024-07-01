@@ -23,6 +23,7 @@ func main() {
 	r.POST("/createBlog", middleware.RequiredAuth, controllers.CreateBlog)
 	r.DELETE("/deleteBlog", middleware.RequiredAuth, controllers.DeleteBlog)
 	r.GET("/getBlogs", middleware.RequiredAuth, controllers.GetBlogs)
+	r.GET("/getBlogsByTags", middleware.RequiredAuth, controllers.GetBlogsByTags)
 	r.POST("/createCompany", middleware.RequiredAuth, controllers.CreateCompany)
 	r.GET("/getCompanies", middleware.RequiredAuth, controllers.GetCompanies)
 	r.DELETE("/deleteCompany", middleware.RequiredAuth, controllers.DeleteCompany)
