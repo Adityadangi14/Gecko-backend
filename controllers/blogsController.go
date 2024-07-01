@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 func CreateBlog(c *gin.Context) {
@@ -136,7 +137,7 @@ func DeleteBlog(c *gin.Context) {
 
 func GetBlogsByTags(c *gin.Context) {
 	var body struct {
-		TagsId []int64
+		TagsId pq.Int64Array `gorm:"type:integer[]"`
 	}
 
 	if c.Bind(&body) != nil {
@@ -147,11 +148,12 @@ func GetBlogsByTags(c *gin.Context) {
 		return
 	}
 
-	var blogTagIds []int64 = body.TagsId
+	var blogTagIds pq.Int64Array = body.TagsId
 
 	var blogs []models.BlogModel
-	initializers.DB.Where("tags_id IN (?)", blogTagIds).Find(&blogs)
+	initializers.DB.Model(blogs).Where("tags_id @> ?", pq.Int64Array(blogTagIds)).Find(&blogs)
 
+	fmt.Println(blogTagIds)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"blogs":   blogs,
