@@ -89,14 +89,16 @@ func DeleteTrendingBlog(c *gin.Context) {
 
 	var trendingBlog models.TrendingBlogModel
 
-	err := initializers.DB.Where("id = ?", body.BlogId).Delete(&trendingBlog).Error
+	rows := initializers.DB.Where(models.TrendingBlogModel{BlogId: body.BlogId}).Delete(&trendingBlog).RowsAffected
 
-	if err != nil {
+	if rows == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
 
 			"message": "Unbale to delete blog",
 		})
+
+		return
 	}
 
 	blogs, err := getTrendingBlogs()
@@ -107,6 +109,8 @@ func DeleteTrendingBlog(c *gin.Context) {
 
 			"message": "Unbale to get blog",
 		})
+
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -140,6 +144,10 @@ func getTrendingBlogs() ([]models.BlogModel, error) {
 		}
 
 		blogArray = append(blogArray, blog)
+	}
+
+	if blogArray == nil {
+		return make([]models.BlogModel, 0), nil
 	}
 
 	return blogArray, nil
