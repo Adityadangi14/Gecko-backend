@@ -3,6 +3,7 @@ package initializers
 import "gecko_backend/models"
 
 func SyncDB() {
+	DB.Exec("SET search_path TO public")
 	DB.AutoMigrate(&models.BlogModel{})
 	DB.AutoMigrate(&models.CompanyModel{})
 	DB.AutoMigrate(&models.TagModel{})

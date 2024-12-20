@@ -14,38 +14,40 @@ func init() {
 	initializers.LoadEnvVariables()
 	initializers.ConnectToDb()
 	initializers.SyncDB()
+	initializers.ConnectToRedis()
 	initializers.DB.Config.QueryFields = true
 }
 
 func main() {
 	r := gin.Default()
 	// blog
-	r.POST("/createBlog", middleware.RequiredAuth, controllers.CreateBlog)
-	r.DELETE("/deleteBlog", middleware.RequiredAuth, controllers.DeleteBlog)
-	r.GET("/getBlogs", middleware.RequiredAuth, controllers.GetBlogs)
-	r.POST("/getBlogsByTags", middleware.RequiredAuth, controllers.GetBlogsByTags)
+	r.POST("/createBlog", controllers.CreateBlog)
+	r.DELETE("/deleteBlog", controllers.DeleteBlog)
+	r.GET("/getBlogs", controllers.GetBlogs)
+	r.POST("/getBlogsByTags", controllers.GetBlogsByTags)
 	// trending blog
-	r.GET("/getTrendingBlogs", middleware.RequiredAuth, controllers.GetTrendingBlogs)
-	r.POST("/addTrendingBlog", middleware.RequiredAuth, controllers.AddTrendingBlog)
-	r.DELETE("/deleteTrendingBlog", middleware.RequiredAuth, controllers.DeleteTrendingBlog)
+	r.GET("/getTrendingBlogs",middleware.RequiredAuth, controllers.GetTrendingBlogs)
+	r.POST("/addTrendingBlog",  controllers.AddTrendingBlog)
+	r.DELETE("/deleteTrendingBlog",  controllers.DeleteTrendingBlog)
 	// category
-	r.POST("/addBlogCategory", middleware.RequiredAuth, controllers.CreateBlogCategory)
-	r.GET("/getBlogCategory", middleware.RequiredAuth, controllers.GetBlogCategories)
+	r.POST("/addBlogCategory",middleware.RequiredAuth,  controllers.CreateBlogCategory)
+	r.GET("/getBlogCategory",middleware.RequiredAuth,  controllers.GetBlogCategories)
+	r.POST("/getBlogByCategory",middleware.RequiredAuth,  controllers.GetBlogsByCat)
 	// companies
-	r.POST("/createCompany", middleware.RequiredAuth, controllers.CreateCompany)
+	r.POST("/createCompany",middleware.RequiredAuth,  controllers.CreateCompany)
 	r.GET("/getCompanies", middleware.RequiredAuth, controllers.GetCompanies)
-	r.DELETE("/deleteCompany", middleware.RequiredAuth, controllers.DeleteCompany)
-	r.PUT("/editCompany", middleware.RequiredAuth, controllers.EditCompany)
+	r.DELETE("/deleteCompany",middleware.RequiredAuth,  controllers.DeleteCompany)
+	r.PUT("/editCompany",middleware.RequiredAuth,  controllers.EditCompany)
 	// tag
-	r.POST("/createTag", middleware.RequiredAuth, controllers.CreateTag)
-	r.DELETE("/deleteTag", middleware.RequiredAuth, controllers.DeleteTag)
-	r.GET("/getTags", middleware.RequiredAuth, controllers.GetAllTags)
-	r.PUT("/editTag", middleware.RequiredAuth, controllers.EditTag)
+	r.POST("/createTag",middleware.RequiredAuth,  controllers.CreateTag)
+	r.DELETE("/deleteTag",middleware.RequiredAuth, controllers.DeleteTag)
+	r.GET("/getTags",middleware.RequiredAuth, controllers.GetAllTags)
+	r.PUT("/editTag",middleware.RequiredAuth, controllers.EditTag)
 	r.POST("/uploadThumblanilFile", controllers.UploadThumbnailFiles)
 	// user
-	r.GET("/getUser", middleware.RequiredAuth, controllers.GetUser)
-	r.PUT("/editUserTagSelectionStatus", middleware.RequiredAuth, controllers.EditUserTagSelectionStatus)
-	r.POST("/createUserTags", middleware.RequiredAuth, controllers.CreateUserTags)
+	r.GET("/getUser",middleware.RequiredAuth,  controllers.GetUser)
+	r.PUT("/editUserTagSelectionStatus",middleware.RequiredAuth, controllers.EditUserTagSelectionStatus)
+	r.POST("/createUserTags",middleware.RequiredAuth, controllers.CreateUserTags)
 
 	r.POST("/auth", controllers.AuthHandler)
 

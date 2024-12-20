@@ -77,6 +77,10 @@ func RequiredAuth(c *gin.Context) {
 
 		c.Set("user", user)
 
+		fmt.Println(c.Request.URL.Path)
+		
+		
+
 		c.Next()
 	} else {
 		c.AbortWithStatus(http.StatusUnauthorized)
@@ -85,5 +89,4 @@ func RequiredAuth(c *gin.Context) {
 			"message": "Auth Failed()",
 		})
 	}
-
 }

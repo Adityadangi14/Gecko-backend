@@ -1,14 +1,52 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
+	rediskeys "gecko_backend/constants/redisKeys"
 	"gecko_backend/initializers"
 	"gecko_backend/models"
+	"gecko_backend/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 func GetTrendingBlogs(c *gin.Context) {
+
+data,_:=	services.GetCachedData(rediskeys.TrendingBlogs)
+
+if data!= ""{
+
+	type  TrendingBlogModel struct{
+		Title             string
+		ThumbnailUrl      string
+		Description       string
+		PubTime           string
+		BlogUrl           string
+		CompanyId         int
+		Company   models.CompanyModel
+		TagsId            pq.Int64Array 
+		ThumbnailBlurhas string     
+	}
+
+	var trendingBlogs []TrendingBlogModel
+
+	err:=json.Unmarshal([]byte(data),&trendingBlogs)
+	if err!=nil{
+		fmt.Println(err)
+	}
+	fmt.Println("cache hit")
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+
+		"data": trendingBlogs,
+	})
+
+	return
+}
+
 	blogs, err := getTrendingBlogs()
 
 	if err != nil {
@@ -22,8 +60,17 @@ func GetTrendingBlogs(c *gin.Context) {
 		return
 	}
 
+	json,er:= json.Marshal(blogs)
+
+	if(er !=nil){
+		fmt.Println("failed to set cache")
+	}
+
+	initializers.RC.Set(rediskeys.TrendingBlogs,json,0);
+
+
 	c.JSON(http.StatusOK, gin.H{
-		"success": false,
+		"success": true,
 
 		"data": blogs,
 	})
@@ -121,11 +168,12 @@ func DeleteTrendingBlog(c *gin.Context) {
 
 }
 
-func getTrendingBlogs() ([]models.BlogModel, error) {
+func getTrendingBlogs() ([]map[string]interface{}, error) {
 
 	var trendingBlogs []models.TrendingBlogModel
 
-	var blogArray []models.BlogModel
+	var blogArray []map[string]interface{}
+	
 
 	err := initializers.DB.Find(&trendingBlogs).Error
 
@@ -143,11 +191,28 @@ func getTrendingBlogs() ([]models.BlogModel, error) {
 			return nil, err
 		}
 
-		blogArray = append(blogArray, blog)
+		var company models.CompanyModel
+
+		err = initializers.DB.Where("id = ?", blog.CompanyId).Find(&company).Error
+
+		if(err!=nil){
+			return nil, err
+		}
+		blogArray = append(blogArray, map[string]interface{}{
+				"Title":blog.Title,
+				"ThumbnailUrl":blog.ThumbnailUrl,
+				"Description":blog.Discription,
+				"PubTime":blog.PubTime,
+				"BlogUrl":blog.BlogUrl,
+				"CompanyId":blog.CompanyId,
+				"Company":company,
+				"TagsId":blog.TagsId,
+				"ThumbnailBlurhas":blog.ThumbnailBlurhash,
+		})
 	}
 
 	if blogArray == nil {
-		return make([]models.BlogModel, 0), nil
+		return nil, nil
 	}
 
 	return blogArray, nil

@@ -1,11 +1,15 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
+	rediskeys "gecko_backend/constants/redisKeys"
 	"gecko_backend/initializers"
 	"gecko_backend/models"
+	"gecko_backend/services"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
@@ -60,7 +64,7 @@ func CreateBlog(c *gin.Context) {
 		return
 	}
 
-	availableblogs, err := getBlogsPvt()
+	availableblogs, err := getBlogsPvt(1)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -79,7 +83,67 @@ func CreateBlog(c *gin.Context) {
 
 func GetBlogs(c *gin.Context) {
 
-	availableblogs, err := getBlogsPvt()
+	type TagsInApi struct {
+		TagName string
+		ID      uint
+	}
+
+	type CachedBlogs struct{
+
+	Title             string
+	ThumbnailUrl      string
+	Description       string
+	PubTime           string
+	BlogUrl           string
+	CompanyId         int
+	Company 		  models.CompanyModel
+	Tags            []TagsInApi
+	TThumbnailBlurhash string        `gorm:"size:255"`
+
+	}
+
+	pageNo,err := strconv.Atoi(c.Query("pageNo"))
+
+	var total int64
+	initializers.DB.Model(&models.BlogModel{}).Count(&total)
+
+	if(err!=nil){
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to parse page",
+		})
+		return
+	}
+
+	val ,_ := services.GetCachedData(rediskeys.AllBlogs+"/"+c.Query("pageNo"))
+
+	var cachedBlogs []CachedBlogs
+
+	if val != ""{
+		err= json.Unmarshal([]byte(val),&cachedBlogs)
+
+		if err!=nil{
+			fmt.Println(err)
+		}else{
+			c.JSON(http.StatusOK, gin.H{
+				"success": true,
+				"data":    cachedBlogs,
+				"isNextPageExist": total> (5*int64(pageNo)),
+				"isCached":true,
+			})
+			return
+		}
+	}
+
+	availableblogs, err := getBlogsPvt(pageNo)
+
+	blogsStr,err:=	json.Marshal(availableblogs)
+
+	if err !=nil{
+		fmt.Println(err)
+	}
+
+	initializers.RC.Set(rediskeys.AllBlogs+"/"+c.Query("pageNo"),blogsStr,time.Hour);
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -91,6 +155,7 @@ func GetBlogs(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    availableblogs,
+		"isNextPageExist": total> (5*int64(pageNo)),
 	})
 }
 
@@ -110,7 +175,7 @@ func DeleteBlog(c *gin.Context) {
 
 	rows := initializers.DB.Delete(&blog, body.BlogId).RowsAffected
 
-	blogs, err := getBlogsPvt()
+	blogs, err := getBlogsPvt(1)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -151,21 +216,22 @@ func GetBlogsByTags(c *gin.Context) {
 	var blogTagIds pq.Int64Array = body.TagsId
 
 	var blogs []models.BlogModel
-	initializers.DB.Model(blogs).Where("tags_id @> ?", pq.Int64Array(blogTagIds)).Find(&blogs)
+	initializers.DB.Model(blogs).Where("tags_id && ?", pq.Int64Array(blogTagIds)).Find(&blogs)
 
 	fmt.Println(blogTagIds)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"blogs":   blogs,
 	})
-
 }
 
-func getBlogsPvt() ([]map[string]interface{}, error) {
+func getBlogsPvt(pageNo int) ([]map[string]interface{}, error) {
 
 	var blogs []models.BlogModel
 
-	result := initializers.DB.Find(&blogs)
+
+
+	result := initializers.DB.Limit(5).Offset((pageNo-1)*5).Find(&blogs)
 
 	if result.Error != nil {
 
